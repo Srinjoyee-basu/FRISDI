@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://frisdi.onrender.com";
 
 const form = document.getElementById("transaction-form");
 const analyzeButton = document.querySelector(".analyze-button");
