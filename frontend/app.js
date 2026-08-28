@@ -245,3 +245,59 @@ function displayResult(data) {
 // ===============================
 
 loadMetrics();
+// ===============================
+// SIDEBAR NAVIGATION
+// ===============================
+
+const navItems = document.querySelectorAll(".nav-item");
+
+navItems.forEach((item) => {
+
+    item.addEventListener("click", () => {
+
+        navItems.forEach((nav) => {
+            nav.classList.remove("active");
+        });
+
+        item.classList.add("active");
+
+        const text = item.textContent.trim();
+
+        if (text.includes("LIVE AI RISK SIMULATOR")) {
+
+            document
+                .querySelector(".analysis-panel")
+                .scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+        }
+
+        if (text.includes("Dashboard")) {
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        }
+
+        if (text.includes("Simulate Transaction Risk")) {
+
+            document
+                .querySelector(".analysis-panel")
+                .scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            document
+                .getElementById("amount")
+                .focus();
+
+        }
+
+    });
+
+});
