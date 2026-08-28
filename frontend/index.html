@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FRISDI | Fraud Risk Intelligence</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-icon">F</div>
+
+                <div>
+                    <h1>FRISDI</h1>
+                    <p>Fraud Risk Intelligence</p>
+                </div>
+            </div>
+
+            <nav>
+
+                <button class="nav-item active">
+                    <span>◈</span>
+                    Dashboard
+                </button>
+
+                <button class="nav-item">
+                    <span>◌</span>
+                    LIVE AI RISK SIMULATOR
+                </button>
+
+                <button class="nav-item">
+                    <span>⌁</span>
+                    Simulate Transaction Risk
+                </button>
+
+                <button class="nav-item">
+                    <span>◫</span>
+                    Model Performance
+                </button>
+
+            </nav>
+
+            <div class="system-status">
+                <div class="status-dot"></div>
+
+                <div>
+                    <strong>FRISDI AI Online</strong>
+                    <p>Monitoring transactions</p>
+                </div>
+            </div>
+
+        </aside>
+
+
+        <main class="main-content">
+
+            <header>
+
+                <div>
+                    <p class="eyebrow">
+                        AI-POWERED FRAUD DEFENSE
+                    </p>
+
+                    <h2>
+                        Risk Intelligence Dashboard
+                    </h2>
+
+                    <p class="subtitle">
+                        Real-time transaction analysis and fraud detection.
+                    </p>
+                </div>
+
+                <div class="live-badge">
+                    <span></span>
+                    LIVE SYSTEM
+                </div>
+
+            </header>
+
+
+            <section class="metrics-grid">
+
+                <div class="metric-card">
+                    <p>MODEL PRECISION</p>
+                    <h3 id="precision">--</h3>
+                    <span>Held-out test data</span>
+                </div>
+
+                <div class="metric-card">
+                    <p>MODEL RECALL</p>
+                    <h3 id="recall">--</h3>
+                    <span>Fraud detection rate</span>
+                </div>
+
+                <div class="metric-card">
+                    <p>FALSE POSITIVES</p>
+                    <h3 id="false-positives">--</h3>
+                    <span>Model test results</span>
+                </div>
+
+                <div class="metric-card">
+                    <p>TEST SAMPLE SIZE</p>
+                    <h3 id="test-size">--</h3>
+                    <span>Held-out transactions</span>
+                </div>
+
+            </section>
+
+
+            <section class="content-grid">
+
+                <div class="analysis-panel">
+
+                    <div class="section-header">
+
+                        <div>
+                            <p class="eyebrow">
+                                TRANSACTION ANALYSIS
+                            </p>
+
+                            <h2>
+                                Analyze Transaction
+                            </h2>
+                        </div>
+
+                        <div class="ai-indicator">
+                            AI READY
+                        </div>
+
+                    </div>
+
+
+                    <form id="transaction-form">
+
+                        <div class="form-grid">
+
+                            <div class="input-group">
+                                <label>Transaction Amount (₹)</label>
+
+                                <input
+                                    id="amount"
+                                    type="number"
+                                    value="5000"
+                                    required
+                                >
+                            </div>
+
+
+                            <div class="input-group">
+                                <label>Transaction Hour</label>
+
+                                <input
+                                    id="hour"
+                                    type="number"
+                                    min="0"
+                                    max="23"
+                                    value="14"
+                                    required
+                                >
+                            </div>
+
+
+                            <div class="input-group">
+                                <label>Account Age (Days)</label>
+
+                                <input
+                                    id="account-age"
+                                    type="number"
+                                    value="365"
+                                    required
+                                >
+                            </div>
+
+
+                            <div class="input-group">
+                                <label>Transactions Last Hour</label>
+
+                                <input
+                                    id="velocity"
+                                    type="number"
+                                    value="2"
+                                    required
+                                >
+                            </div>
+
+
+                            <div class="input-group">
+                                <label>Failed Transactions</label>
+
+                                <input
+                                    id="failed"
+                                    type="number"
+                                    value="0"
+                                    required
+                                >
+                            </div>
+
+
+                            <div class="input-group">
+                                <label>Distance From Home (km)</label>
+
+                                <input
+                                    id="distance"
+                                    type="number"
+                                    value="10"
+                                    required
+                                >
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="analyze-button"
+                        >
+                            Run FRISDI Simulation
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+                <div class="result-panel">
+
+                    <p class="eyebrow">
+                        AI ASSESSMENT
+                    </p>
+
+                    <h2>
+                        Risk Analysis
+                    </h2>
+
+
+                    <div id="empty-result" class="empty-result">
+
+                        <div class="empty-icon">
+                            ◈
+                        </div>
+
+                        <p>
+                           Change transaction conditions to watch
+                           FRISDI evaluate fraud risk in real time.
+                        </p>
+
+                    </div>
+
+
+                    <div id="result" class="result hidden">
+
+                        <div class="risk-score">
+
+                            <div
+                                class="score-circle"
+                                id="score-circle"
+                            >
+                                <span id="risk-score">--</span>
+                            </div>
+
+                            <div>
+                                <p>FRAUD PROBABILITY</p>
+
+                                <h3 id="risk-level">
+                                    --
+                                </h3>
+                            </div>
+
+                        </div>
+
+
+                        <div class="reasons">
+
+                            <p class="reason-title">
+                                DETECTED SIGNALS
+                            </p>
+
+                            <ul id="reasons-list"></ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
