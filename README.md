@@ -1,5 +1,5 @@
 # FRISDI
-FRISDI is a hybrid AI-powered fraud risk intelligence platform that analyzes transaction behaviour, predicts fraud risk, explains suspicious signals, and allows users to simulate how changing transaction conditions affect risk.
+FRISDI is a hybrid AI-powered fraud risk intelligence platform that analyzes transaction behaviour, predicts fraud risk, explains suspicious signals, and allows users to simulate how changing transaction conditions affect risk. IT IS A MVP
 # 🛡️ FRISDI
 
 ### Fraud Risk Intelligence & Detection Interface
