@@ -8,6 +8,7 @@ from agent.tools import (
 from agent.state import InvestigationState
 from agent.llm import analyze_transaction
 
+
 class FRISDIAgent:
 
     def __init__(self, model, features):
@@ -18,34 +19,26 @@ class FRISDIAgent:
     # EVIDENCE-AWARE PLANNER
     # ==================================================
 
-   def choose_next_action( self, state,transaction, investigated=None ):
-    if investigated is None:
-        investigated = set()
-        """
-        Chooses the next investigation action based on:
-
-        1. Initial transaction signals
-        2. Evidence already collected
-        3. Missing evidence
-        4. Current uncertainty
-        """
+    def choose_next_action(
+        self,
+        state,
+        transaction,
+        investigated=None
+    ):
+        if investigated is None:
+            investigated = set()
 
         candidates = []
-
         evidence = state.evidence
 
         # ==================================================
         # ML ANALYZER
         # ==================================================
 
-        if (
-    "ml" not in evidence
-    and "ml" not in investigated
-):
+        if "ml" not in evidence and "ml" not in investigated:
+
             ml_priority = 20
 
-            # ML is useful when we need an independent
-            # overall fraud estimate.
             ml_reason = (
                 "An independent ML risk estimate "
                 "is still unavailable."
@@ -78,13 +71,9 @@ class FRISDIAgent:
         # RULE ANALYZER
         # ==================================================
 
-      if (
-    "rules" not in evidence
-    and "rules" not in investigated
-):
+        if "rules" not in evidence and "rules" not in investigated:
 
             rule_priority = 20
-
             rule_reasons = []
 
             if transaction.amount >= 50000:
@@ -106,23 +95,17 @@ class FRISDIAgent:
                 )
 
             if rule_reasons:
-
                 rule_reason = (
                     "Explicit rules can verify "
                     + ", ".join(rule_reasons)
                     + "."
                 )
-
             else:
-
                 rule_reason = (
                     "No rule-based evidence has been "
                     "collected yet."
                 )
 
-            # If behaviour has already been checked,
-            # rules become more useful as an independent
-            # evidence source.
             if "behaviour" in evidence:
                 rule_priority += 15
                 rule_reason += (
@@ -140,12 +123,11 @@ class FRISDIAgent:
         # ==================================================
 
         if (
-    "behaviour" not in evidence
-    and "behaviour" not in investigated
-):
+            "behaviour" not in evidence
+            and "behaviour" not in investigated
+        ):
 
             behaviour_priority = 20
-
             behaviour_reasons = []
 
             if transaction.distance_from_home > 100:
@@ -167,22 +149,17 @@ class FRISDIAgent:
                 )
 
             if behaviour_reasons:
-
                 behaviour_reason = (
                     "Behavioural analysis can investigate "
                     + ", ".join(behaviour_reasons)
                     + "."
                 )
-
             else:
-
                 behaviour_reason = (
                     "No behavioural analysis has been "
                     "performed yet."
                 )
 
-            # If rules already found strong evidence,
-            # behaviour provides an independent dimension.
             if "rules" in evidence:
                 behaviour_priority += 20
                 behaviour_reason += (
@@ -203,10 +180,10 @@ class FRISDIAgent:
         # ACCOUNT ANALYZER
         # ==================================================
 
-       if (
-    "account" not in evidence
-    and "account" not in investigated
-):
+        if (
+            "account" not in evidence
+            and "account" not in investigated
+        ):
 
             account_priority = 15
 
@@ -220,14 +197,11 @@ class FRISDIAgent:
                 )
 
             else:
-
                 account_reason = (
                     "Account context has not yet been "
                     "investigated."
                 )
 
-            # Account evidence becomes more useful when
-            # other signals are already suspicious.
             if len(evidence) >= 2:
                 account_priority += 10
                 account_reason += (
@@ -249,7 +223,6 @@ class FRISDIAgent:
         # ==================================================
 
         if not candidates:
-
             return (
                 None,
                 "All available investigation tools "
@@ -364,7 +337,6 @@ class FRISDIAgent:
         # ==================================================
 
         investigated = set()
-
         max_steps = 6
 
         while (
@@ -384,8 +356,10 @@ class FRISDIAgent:
                         self.model,
                         self.features,
                         transaction,
-                        simulate_failure=(
-                            transaction.simulate_ml_failure
+                        simulate_failure=getattr(
+                            transaction,
+                            "simulate_ml_failure",
+                            False
                         )
                     )
 
@@ -446,7 +420,8 @@ class FRISDIAgent:
                     next_action, fallback_thought = (
                         self.choose_next_action(
                             state,
-                            transaction
+                            transaction,
+                            investigated
                         )
                     )
 
@@ -574,26 +549,23 @@ class FRISDIAgent:
             ml_score = 0
 
             if "ml" in state.evidence:
-
-                ml_score = state.evidence[
-                    "ml"
-                ]["fraud_probability"]
+                ml_score = state.evidence["ml"][
+                    "fraud_probability"
+                ]
 
             rule_count = 0
 
             if "rules" in state.evidence:
-
-                rule_count = state.evidence[
-                    "rules"
-                ]["rule_count"]
+                rule_count = state.evidence["rules"][
+                    "rule_count"
+                ]
 
             anomaly_count = 0
 
             if "behaviour" in state.evidence:
-
-                anomaly_count = state.evidence[
-                    "behaviour"
-                ]["anomaly_count"]
+                anomaly_count = state.evidence["behaviour"][
+                    "anomaly_count"
+                ]
 
             # ------------------------------------------
             # Start with ML evidence
@@ -650,7 +622,8 @@ class FRISDIAgent:
 
             next_action, thought = self.choose_next_action(
                 state,
-                transaction
+                transaction,
+                investigated
             )
 
             # ------------------------------------------
@@ -738,47 +711,64 @@ class FRISDIAgent:
 
         state.completed = True
 
-# ==================================================
-# STEP 9: LLM INVESTIGATION ANALYSIS
-# ==================================================
+        # ==================================================
+        # STEP 9: LLM INVESTIGATION ANALYSIS
+        # ==================================================
 
-llm_analysis = None
+        llm_analysis = None
 
-try:
+        try:
 
-    llm_input = {
-        "transaction": {
-            "amount": transaction.amount,
-            "hour": transaction.hour,
-            "account_age_days": transaction.account_age_days,
-            "transactions_last_hour": transaction.transactions_last_hour,
-            "failed_transactions": transaction.failed_transactions,
-            "distance_from_home": transaction.distance_from_home
-        },
+            llm_input = {
+                "transaction": {
+                    "amount": transaction.amount,
+                    "hour": transaction.hour,
+                    "account_age_days": (
+                        transaction.account_age_days
+                    ),
+                    "transactions_last_hour": (
+                        transaction.transactions_last_hour
+                    ),
+                    "failed_transactions": (
+                        transaction.failed_transactions
+                    ),
+                    "distance_from_home": (
+                        transaction.distance_from_home
+                    )
+                },
 
-        "risk_score": round(state.risk_score, 2),
-        "risk_level": state.risk_level,
-        "decision": state.decision,
+                "risk_score": round(
+                    state.risk_score,
+                    2
+                ),
 
-        "observations": state.observations,
+                "risk_level": state.risk_level,
 
-        "evidence": state.evidence,
+                "decision": state.decision,
 
-        "reasons": list(
-            dict.fromkeys(state.reasons)
-        ),
+                "observations": state.observations,
 
-        "actions_taken": state.actions_taken
-    }
+                "evidence": state.evidence,
 
-    llm_analysis = analyze_transaction(llm_input)
+                "reasons": list(
+                    dict.fromkeys(
+                        state.reasons
+                    )
+                ),
 
-except Exception as error:
+                "actions_taken": state.actions_taken
+            }
 
-    llm_analysis = (
-        "LLM analysis unavailable. "
-        f"Reason: {str(error)}"
-    )
+            llm_analysis = analyze_transaction(
+                llm_input
+            )
+
+        except Exception as error:
+
+            llm_analysis = (
+                "LLM analysis unavailable. "
+                f"Reason: {str(error)}"
+            )
 
         # ==================================================
         # FINAL RESPONSE
@@ -790,41 +780,50 @@ except Exception as error:
                 "should be allowed, reviewed, or blocked."
             ),
 
-            "observations":
-                state.observations,
+            "observations": (
+                state.observations
+            ),
 
-            "investigation_log":
-                state.investigation_log,
+            "investigation_log": (
+                state.investigation_log
+            ),
 
-            "actions_taken":
-                state.actions_taken,
+            "actions_taken": (
+                state.actions_taken
+            ),
 
-            "adaptation":
-                state.adaptation,
+            "adaptation": (
+                state.adaptation
+            ),
 
-            "evidence":
-                state.evidence,
+            "evidence": (
+                state.evidence
+            ),
 
-            "risk_score":
-                round(
-                    state.risk_score,
-                    2
-                ),
+            "risk_score": round(
+                state.risk_score,
+                2
+            ),
 
-            "risk_level":
-                state.risk_level,
+            "risk_level": (
+                state.risk_level
+            ),
 
-            "confidence":
-                state.confidence,
+            "confidence": (
+                state.confidence
+            ),
 
-            "decision":
-                state.decision,
+            "decision": (
+                state.decision
+            ),
 
-            "reasons":
-                list(
-                    dict.fromkeys(
-                        state.reasons
-                    )
+            "reasons": list(
+                dict.fromkeys(
+                    state.reasons
                 )
-            "llm_analysis": llm_analysis
+            ),
+
+            "llm_analysis": (
+                llm_analysis
+            )
         }
