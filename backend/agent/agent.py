@@ -18,7 +18,9 @@ class FRISDIAgent:
     # EVIDENCE-AWARE PLANNER
     # ==================================================
 
-    def choose_next_action(self, state, transaction):
+   def choose_next_action( self, state,transaction, investigated=None ):
+    if investigated is None:
+        investigated = set()
         """
         Chooses the next investigation action based on:
 
@@ -36,8 +38,10 @@ class FRISDIAgent:
         # ML ANALYZER
         # ==================================================
 
-        if "ml" not in evidence:
-
+        if (
+    "ml" not in evidence
+    and "ml" not in investigated
+):
             ml_priority = 20
 
             # ML is useful when we need an independent
@@ -74,7 +78,10 @@ class FRISDIAgent:
         # RULE ANALYZER
         # ==================================================
 
-        if "rules" not in evidence:
+      if (
+    "rules" not in evidence
+    and "rules" not in investigated
+):
 
             rule_priority = 20
 
@@ -132,7 +139,10 @@ class FRISDIAgent:
         # BEHAVIOUR ANALYZER
         # ==================================================
 
-        if "behaviour" not in evidence:
+        if (
+    "behaviour" not in evidence
+    and "behaviour" not in investigated
+):
 
             behaviour_priority = 20
 
@@ -193,7 +203,10 @@ class FRISDIAgent:
         # ACCOUNT ANALYZER
         # ==================================================
 
-        if "account" not in evidence:
+       if (
+    "account" not in evidence
+    and "account" not in investigated
+):
 
             account_priority = 15
 
