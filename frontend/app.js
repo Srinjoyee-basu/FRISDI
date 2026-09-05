@@ -17,33 +17,28 @@ const riskLevelElement = document.getElementById("risk-level");
 const scoreCircle = document.getElementById("score-circle");
 const reasonsList = document.getElementById("reasons-list");
 
+const llmAnalysis = document.getElementById("llm-analysis");
+const llmAnalysisContent =
+    document.getElementById("llm-analysis-content");
 
-// ===============================
+
+// ================================
 // GET TRANSACTION DATA
-// ===============================
+// ================================
 
 function getTransactionData() {
     return {
-        amount: Number(
-            document.getElementById("amount").value
-        ),
-
-        hour: Number(
-            document.getElementById("hour").value
-        ),
-
+        amount: Number(document.getElementById("amount").value),
+        hour: Number(document.getElementById("hour").value),
         account_age_days: Number(
             document.getElementById("account-age").value
         ),
-
         transactions_last_hour: Number(
             document.getElementById("velocity").value
         ),
-
         failed_transactions: Number(
             document.getElementById("failed").value
         ),
-
         distance_from_home: Number(
             document.getElementById("distance").value
         )
@@ -51,43 +46,27 @@ function getTransactionData() {
 }
 
 
-// ===============================
+// ================================
 // LOAD MODEL METRICS
-// ===============================
+// ================================
 
 async function loadMetrics() {
-
     try {
-        const response = await fetch(
-            `${API_URL}/metrics`
-        );
+        const response = await fetch(`${API_URL}/metrics`);
 
         if (!response.ok) {
-            throw new Error(
-                "Could not load model metrics"
-            );
+            throw new Error("Could not load model metrics");
         }
 
         const data = await response.json();
 
-        precisionElement.textContent =
-            `${data.precision}%`;
-
-        recallElement.textContent =
-            `${data.recall}%`;
-
-        falsePositivesElement.textContent =
-            data.false_positives;
-
-        testSizeElement.textContent =
-            data.test_size;
+        precisionElement.textContent = `${data.precision}%`;
+        recallElement.textContent = `${data.recall}%`;
+        falsePositivesElement.textContent = data.false_positives;
+        testSizeElement.textContent = data.test_size;
 
     } catch (error) {
-
-        console.error(
-            "Metrics error:",
-            error
-        );
+        console.error("Metrics error:", error);
 
         precisionElement.textContent = "Offline";
         recallElement.textContent = "Offline";
@@ -97,9 +76,13 @@ async function loadMetrics() {
 }
 
 
-// ===============================
-// LIVE AI SIMULATION
-// ===============================
+// ================================
+// LIVE RISK SIMULATION
+// ================================
+//
+// This uses /predict because it is fast and deterministic.
+// We DO NOT call the LLM every time the user changes an input.
+//
 
 let simulatorTimeout = null;
 
@@ -123,19 +106,15 @@ async function runRiskSimulation() {
             `${API_URL}/predict`,
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify(transaction)
             }
         );
 
         if (!response.ok) {
-            throw new Error(
-                "Prediction failed"
-            );
+            throw new Error("Prediction failed");
         }
 
         const data = await response.json();
@@ -152,9 +131,80 @@ async function runRiskSimulation() {
 }
 
 
-// ===============================
+// ================================
+// AGENTIC FRISDI INVESTIGATION
+// ================================
+//
+// This is the important new part.
+//
+// The button calls:
+//
+// POST /agent/investigate
+//
+// Backend then runs:
+//
+// Transaction
+//    ↓
+// FRISDI Agent
+//    ↓
+// Rules / Behaviour / ML / Account
+//    ↓
+// Risk evaluation
+//    ↓
+// OpenRouter LLM
+//    ↓
+// llm_analysis
+//
+
+async function runAgentInvestigation() {
+
+    const transaction = getTransactionData();
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/agent/investigate`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(transaction)
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Agent investigation failed: ${response.status}`
+            );
+        }
+
+        const data = await response.json();
+
+        console.log(
+            "FRISDI agent investigation:",
+            data
+        );
+
+        displayAgentResult(data);
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "FRISDI agent error:",
+            error
+        );
+
+        throw error;
+    }
+}
+
+
+// ================================
 // WATCH INPUT CHANGES
-// ===============================
+// ================================
 
 simulatorInputs.forEach((input) => {
 
@@ -172,9 +222,9 @@ simulatorInputs.forEach((input) => {
 });
 
 
-// ===============================
-// MANUAL SIMULATION BUTTON
-// ===============================
+// ================================
+// MANUAL FRISDI INVESTIGATION
+// ================================
 
 form.addEventListener(
     "submit",
@@ -185,26 +235,53 @@ form.addEventListener(
         analyzeButton.disabled = true;
 
         analyzeButton.textContent =
-            "FRISDI AI ANALYZING...";
+            "FRISDI AI INVESTIGATING...";
 
-        await runRiskSimulation();
+        // Show result area immediately
+        emptyResult.classList.add("hidden");
+        result.classList.remove("hidden");
 
-        analyzeButton.disabled = false;
+        // Hide previous LLM analysis
+        if (llmAnalysis) {
+            llmAnalysis.classList.add("hidden");
+        }
 
-        analyzeButton.textContent =
-            "Run FRISDI Simulation";
+        try {
+
+            await runAgentInvestigation();
+
+        } catch (error) {
+
+            console.error(error);
+
+            if (llmAnalysis) {
+
+                llmAnalysis.classList.remove("hidden");
+
+                llmAnalysisContent.textContent =
+                    "FRISDI investigation could not be completed. Please try again.";
+
+            }
+
+        } finally {
+
+            analyzeButton.disabled = false;
+
+            analyzeButton.textContent =
+                "Run FRISDI Simulation";
+        }
+
     }
 );
 
 
-// ===============================
-// DISPLAY AI RESULT
-// ===============================
+// ================================
+// DISPLAY BASIC RISK RESULT
+// ================================
 
 function displayResult(data) {
 
     emptyResult.classList.add("hidden");
-
     result.classList.remove("hidden");
 
     riskScoreElement.textContent =
@@ -220,84 +297,160 @@ function displayResult(data) {
     );
 
     const level =
-        data.risk_level.toLowerCase();
+        String(data.risk_level || "")
+            .toLowerCase();
 
     scoreCircle.classList.add(level);
 
     reasonsList.innerHTML = "";
 
-    data.reasons.forEach((reason) => {
+    if (Array.isArray(data.reasons)) {
 
-        const item =
-            document.createElement("li");
+        data.reasons.forEach((reason) => {
 
-        item.textContent = reason;
+            const item =
+                document.createElement("li");
 
-        reasonsList.appendChild(item);
+            item.textContent = reason;
 
-    });
+            reasonsList.appendChild(item);
 
+        });
+
+    }
 }
 
 
-// ===============================
+// ================================
+// DISPLAY AGENTIC RESULT
+// ================================
+
+function displayAgentResult(data) {
+
+    // Basic risk information
+    displayResult(data);
+
+
+    // ============================
+    // LLM ANALYSIS
+    // ============================
+
+    if (
+        llmAnalysis &&
+        llmAnalysisContent
+    ) {
+
+        const analysis =
+            data.llm_analysis;
+
+        if (analysis) {
+
+            llmAnalysis.classList.remove(
+                "hidden"
+            );
+
+            // textContent prevents the LLM
+            // from injecting HTML into the page.
+            llmAnalysisContent.textContent =
+                analysis;
+
+            // Make the AI response readable
+            llmAnalysisContent.style.whiteSpace =
+                "pre-wrap";
+
+            llmAnalysisContent.style.lineHeight =
+                "1.7";
+
+        } else {
+
+            llmAnalysis.classList.add(
+                "hidden"
+            );
+
+        }
+
+    }
+}
+
+
+// ================================
 // START FRISDI
-// ===============================
+// ================================
 
 loadMetrics();
-// ===============================
-// SIDEBAR NAVIGATION
-// ===============================
 
-const navItems = document.querySelectorAll(".nav-item");
+
+// ================================
+// SIDEBAR NAVIGATION
+// ================================
+
+const navItems =
+    document.querySelectorAll(".nav-item");
 
 navItems.forEach((item) => {
 
-    item.addEventListener("click", () => {
+    item.addEventListener(
+        "click",
+        () => {
 
-        navItems.forEach((nav) => {
-            nav.classList.remove("active");
-        });
+            navItems.forEach((nav) =>
+                nav.classList.remove("active")
+            );
 
-        item.classList.add("active");
+            item.classList.add("active");
 
-        const text = item.textContent.trim();
+            const text =
+                item.textContent.trim();
 
-        if (text.includes("LIVE AI RISK SIMULATOR")) {
 
-            document
-                .querySelector(".analysis-panel")
-                .scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
+            if (
+                text.includes(
+                    "LIVE AI RISK SIMULATOR"
+                )
+            ) {
+
+                document
+                    .querySelector(".analysis-panel")
+                    .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+            }
+
+
+            if (
+                text.includes("Dashboard")
+            ) {
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
                 });
 
-        }
+            }
 
-        if (text.includes("Dashboard")) {
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+            if (
+                text.includes(
+                    "Simulate Transaction Risk"
+                )
+            ) {
 
-        }
+                document
+                    .querySelector(".analysis-panel")
+                    .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
 
-        if (text.includes("Simulate Transaction Risk")) {
+                document
+                    .getElementById("amount")
+                    .focus();
 
-            document
-                .querySelector(".analysis-panel")
-                .scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-
-            document
-                .getElementById("amount")
-                .focus();
+            }
 
         }
-
-    });
+    );
 
 });
