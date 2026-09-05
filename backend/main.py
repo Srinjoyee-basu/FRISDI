@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import joblib
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
-
+from agent.agent import FRISDIAgent
 app = FastAPI(
     title="FRISDI AI",
     description="Fraud Risk Intelligence & Spike Detection Interface",
@@ -11,7 +11,11 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://0.0.0.0:5500"
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,6 +27,11 @@ model_package = joblib.load("frisdi_model.pkl")
 model = model_package["model"]
 FEATURES = model_package["features"]
 
+# Initialize FRISDI Agent
+frisdi_agent = FRISDIAgent(
+    model=model,
+    features=FEATURES
+)
 
 class Transaction(BaseModel):
     amount: float
@@ -31,7 +40,7 @@ class Transaction(BaseModel):
     transactions_last_hour: int
     failed_transactions: int
     distance_from_home: float
-
+    simulate_ml_failure: bool=False
 
 @app.get("/")
 def home():
@@ -178,3 +187,11 @@ def predict(transaction: Transaction):
         "risk_level": risk_level,
         "reasons": reasons
     }
+@app.post("/agent/investigate")
+def investigate_transaction(transaction: Transaction):
+
+    result = frisdi_agent.investigate(
+        transaction
+    )
+
+    return result
