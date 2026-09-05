@@ -6,7 +6,7 @@ from agent.tools import (
 )
 
 from agent.state import InvestigationState
-
+from agent.llm import analyze_transaction
 
 class FRISDIAgent:
 
@@ -725,6 +725,48 @@ class FRISDIAgent:
 
         state.completed = True
 
+# ==================================================
+# STEP 9: LLM INVESTIGATION ANALYSIS
+# ==================================================
+
+llm_analysis = None
+
+try:
+
+    llm_input = {
+        "transaction": {
+            "amount": transaction.amount,
+            "hour": transaction.hour,
+            "account_age_days": transaction.account_age_days,
+            "transactions_last_hour": transaction.transactions_last_hour,
+            "failed_transactions": transaction.failed_transactions,
+            "distance_from_home": transaction.distance_from_home
+        },
+
+        "risk_score": round(state.risk_score, 2),
+        "risk_level": state.risk_level,
+        "decision": state.decision,
+
+        "observations": state.observations,
+
+        "evidence": state.evidence,
+
+        "reasons": list(
+            dict.fromkeys(state.reasons)
+        ),
+
+        "actions_taken": state.actions_taken
+    }
+
+    llm_analysis = analyze_transaction(llm_input)
+
+except Exception as error:
+
+    llm_analysis = (
+        "LLM analysis unavailable. "
+        f"Reason: {str(error)}"
+    )
+
         # ==================================================
         # FINAL RESPONSE
         # ==================================================
@@ -771,4 +813,5 @@ class FRISDIAgent:
                         state.reasons
                     )
                 )
+            "llm_analysis": llm_analysis
         }
