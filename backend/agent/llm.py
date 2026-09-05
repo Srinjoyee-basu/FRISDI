@@ -1,3 +1,4 @@
+import json
 import os
 from openai import OpenAI
 
@@ -31,7 +32,7 @@ IMPORTANT:
 
 Transaction and investigation data:
 
-{transaction_data}
+{json.dumps(transaction_data, indent=2)}
 
 Return your response with these sections:
 
